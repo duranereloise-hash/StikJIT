@@ -92,9 +92,11 @@ jobs:
           cd /tmp/idevice/ffi
           cargo build --release --target aarch64-apple-tvos \
             --no-default-features --features rustcrypto,full
-          ls -la target/aarch64-apple-tvos/release/*.a
-          FFI_A=$(ls target/aarch64-apple-tvos/release/libidevice_ffi*.a | head -1)
-          test -n "$FFI_A"
+          echo "pwd=$(pwd)"
+          echo "CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-unset}"
+          find /tmp/idevice -name "*.a" 2>/dev/null | head -20
+          FFI_A=$(find /tmp/idevice -name "libidevice_ffi*.a" 2>/dev/null | head -1)
+          test -n "$FFI_A" || { echo "no staticlib found under /tmp/idevice"; exit 1; }
           cp "$FFI_A" "$GITHUB_WORKSPACE/idevice/libidevice_ffi_tvos.a"
           ls -la "$GITHUB_WORKSPACE/idevice/libidevice_ffi_tvos.a"
 
