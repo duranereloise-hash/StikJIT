@@ -17,3 +17,7 @@ xcuserdata/
 *.bak
 *.swp
 *.log
+
+# tvOS build artifacts
+StikJITTV.xcframework/
+StikJITTV.xcframework.zip

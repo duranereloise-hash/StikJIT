@@ -64,7 +64,7 @@ enum DDIDownloadCatalog {
     }
 }
 
-@available(iOS 17.4, *)
+@available(iOS 17.4, tvOS 17.4, *)
 public actor DeveloperDiskImageService {
 
     private static let sharedInstance = DeveloperDiskImageService()

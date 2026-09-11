@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: com.stik
   deploymentTarget:
     iOS: "17.4"
+    tvOS: "17.4"
   createIntermediateGroups: true
 
 settings:
@@ -34,17 +35,50 @@ targets:
         DEFINES_MODULE: YES
         BUILD_LIBRARY_FOR_DISTRIBUTION: YES
         SKIP_INSTALL: NO
-        # idevice FFI: modulemap/headers to compile `import idevice`, and force_load the
-        # static lib so all its symbols are embedded in the framework binary (self-contained).
         SWIFT_INCLUDE_PATHS: "$(SRCROOT)/idevice $(SRCROOT)/iokit"
         HEADER_SEARCH_PATHS: "$(SRCROOT)/idevice $(SRCROOT)/iokit"
         LIBRARY_SEARCH_PATHS: "$(SRCROOT)/idevice"
         OTHER_LDFLAGS: "-force_load $(SRCROOT)/idevice/libidevice_ffi.a"
+
+  StikJITTV:
+    type: framework
+    platform: tvOS
+    sources:
+      - path: Sources
+      - path: Resources
+        buildPhase: resources
+    dependencies:
+      - sdk: JavaScriptCore.framework
+      - sdk: Network.framework
+      - sdk: Security.framework
+      - sdk: CFNetwork.framework
+      - sdk: SystemConfiguration.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.stik.StikJITTV
+        PRODUCT_NAME: StikJITTV
+        DEFINES_MODULE: YES
+        BUILD_LIBRARY_FOR_DISTRIBUTION: YES
+        SKIP_INSTALL: NO
+        SWIFT_INCLUDE_PATHS: "$(SRCROOT)/idevice"
+        HEADER_SEARCH_PATHS: "$(SRCROOT)/idevice"
+        LIBRARY_SEARCH_PATHS: "$(SRCROOT)/idevice"
+        # tvOS FFI is built on the fly in CI (see .github/workflows/build.yml)
+        # because the committed libidevice_ffi.a is arm64-apple-iOS.
+        OTHER_LDFLAGS: "-force_load $(SRCROOT)/idevice/libidevice_ffi_tvos.a"
+        # tvOS has no IOKit; TXM detection falls back to absent/unknown.
 
 schemes:
   StikJIT:
     build:
       targets:
         StikJIT: all
+    archive:
+      config: Release
+
+  StikJITTV:
+    build:
+      targets:
+        StikJITTV: all
     archive:
       config: Release

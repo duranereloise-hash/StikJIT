@@ -29,7 +29,7 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
-      - name: Build framework
+      - name: Build framework (iOS)
         run: |
           xcodebuild archive \
             -project StikJIT.xcodeproj \
@@ -40,16 +40,16 @@ jobs:
             BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Assemble XCFramework
+      - name: Assemble XCFramework (iOS)
         run: |
           xcodebuild -create-xcframework \
             -framework build/StikJIT-iOS.xcarchive/Products/Library/Frameworks/StikJIT.framework \
             -output StikJIT.xcframework
 
-      - name: Zip XCFramework
+      - name: Zip XCFramework (iOS)
         run: zip -ry StikJIT.xcframework.zip StikJIT.xcframework
 
-      - name: Upload artifact
+      - name: Upload artifact (iOS)
         uses: actions/upload-artifact@v7
         with:
           name: StikJIT.xcframework
@@ -62,3 +62,61 @@ jobs:
         with:
           files: StikJIT.xcframework.zip
           generate_release_notes: true
+
+  build-tvos:
+    name: Build tvOS XCFramework
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Install Rust (tvOS target)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-tvos
+
+      # The committed libidevice_ffi.a is arm64-apple-iOS; tvOS cannot link
+      # it. Build the FFI for tvOS from the pinned idevice revision on the fly.
+      - name: Build idevice FFI for tvOS
+        env:
+          IDEVICE_REF: master
+        run: |
+          git clone --depth 1 --branch "$IDEVICE_REF" https://github.com/jkcoxson/idevice.git /tmp/idevice
+          cd /tmp/idevice/ffi
+          cargo build --release --target aarch64-apple-tvos
+          cp target/aarch64-apple-tvos/release/libidevice_ffi.a \
+             "$GITHUB_WORKSPACE/idevice/libidevice_ffi_tvos.a"
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build framework (tvOS)
+        run: |
+          xcodebuild archive \
+            -project StikJIT.xcodeproj \
+            -scheme StikJITTV \
+            -destination 'generic/platform=tvOS' \
+            -archivePath build/StikJIT-tvOS \
+            SKIP_INSTALL=NO \
+            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Assemble XCFramework (tvOS)
+        run: |
+          xcodebuild -create-xcframework \
+            -framework build/StikJIT-tvOS.xcarchive/Products/Library/Frameworks/StikJITTV.framework \
+            -output StikJITTV.xcframework
+
+      - name: Zip XCFramework (tvOS)
+        run: zip -ry StikJITTV.xcframework.zip StikJITTV.xcframework
+
+      - name: Upload artifact (tvOS)
+        uses: actions/upload-artifact@v7
+        with:
+          name: StikJITTV.xcframework
+          path: StikJITTV.xcframework.zip
+          if-no-files-found: error

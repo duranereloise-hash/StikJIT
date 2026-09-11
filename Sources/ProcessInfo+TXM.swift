@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(StikJITIOKit)
 @_implementationOnly import StikJITIOKit
+#endif
 
 enum TXMPresence {
     case present
@@ -25,6 +27,10 @@ enum TXMPresence {
 
 extension ProcessInfo {
     var txmPresence: TXMPresence {
+        // tvOS has no IOKit (and no IORegistry path to TXM). Report unknown
+        // so callers fall back to running the universal script, which the
+        // debug server handles regardless of TXM presence.
+        #if canImport(StikJITIOKit)
         let memoryMap = IORegistryEntryFromPath(kIOMainPortDefault, "IODeviceTree:/chosen/memory-map")
         guard memoryMap != 0 else { return .unknown }
 
@@ -38,5 +44,8 @@ extension ProcessInfo {
         guard let keys = keysCF as? [String] else { return .unknown }
 
         return keys.contains("TXM") ? .present : .absent
+        #else
+        return .unknown
+        #endif
     }
 }
