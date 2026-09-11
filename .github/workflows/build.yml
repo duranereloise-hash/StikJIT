@@ -81,13 +81,17 @@ jobs:
 
       # The committed libidevice_ffi.a is arm64-apple-iOS; tvOS cannot link
       # it. Build the FFI for tvOS from the pinned idevice revision on the fly.
+      # NOTE: default features pull in aws-lc, whose asm objects reference
+      # ___chkstk_darwin (present on iOS, missing on tvOS) — use the
+      # rustcrypto TLS backend instead.
       - name: Build idevice FFI for tvOS
         env:
           IDEVICE_REF: master
         run: |
           git clone --depth 1 --branch "$IDEVICE_REF" https://github.com/jkcoxson/idevice.git /tmp/idevice
           cd /tmp/idevice/ffi
-          cargo build --release --target aarch64-apple-tvos
+          cargo build --release --target aarch64-apple-tvos \
+            --no-default-features --features rustcrypto,full
           cp target/aarch64-apple-tvos/release/libidevice_ffi.a \
              "$GITHUB_WORKSPACE/idevice/libidevice_ffi_tvos.a"
 
