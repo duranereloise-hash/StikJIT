@@ -92,8 +92,11 @@ jobs:
           cd /tmp/idevice/ffi
           cargo build --release --target aarch64-apple-tvos \
             --no-default-features --features rustcrypto,full
-          cp target/aarch64-apple-tvos/release/libidevice_ffi.a \
-             "$GITHUB_WORKSPACE/idevice/libidevice_ffi_tvos.a"
+          ls -la target/aarch64-apple-tvos/release/*.a
+          FFI_A=$(ls target/aarch64-apple-tvos/release/libidevice_ffi*.a | head -1)
+          test -n "$FFI_A"
+          cp "$FFI_A" "$GITHUB_WORKSPACE/idevice/libidevice_ffi_tvos.a"
+          ls -la "$GITHUB_WORKSPACE/idevice/libidevice_ffi_tvos.a"
 
       - name: Generate Xcode project
         run: xcodegen generate
