@@ -129,3 +129,5 @@ jobs:
           name: StikJITTV.xcframework
           path: StikJITTV.xcframework.zip
           if-no-files-found: error
+
+# note: keep push triggers working after fork Actions enablement
